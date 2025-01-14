@@ -27,10 +27,14 @@ export const SignUp: React.FC = () => {
       if (!error) {
         navigate('/');
       } else {
-        console.error('Sign-up error:', error.message);
+        alert(`Sign-up error: ${error.message}`);
       }
     } catch (error) {
-      console.error('Sign-up error:', error);
+      if (error instanceof Error) {
+        alert(`An unexpected error occurred: ${error.message}`);
+      } else {
+        alert('An unexpected error occurred.');
+      }
     }
   };
 
@@ -79,6 +83,14 @@ export const SignUp: React.FC = () => {
             required
           />
         </div>
+        <hr className="my-4 border-t border-gray-300 dark:border-gray-600" />
+        <ul className="list-disc list-inside text-sm text-gray-700 dark:text-gray-200">
+          <li>Minimum 10 characters</li>
+          <li>At least one uppercase letter</li>
+          <li>At least one lowercase letter</li>
+          <li>At least one number</li>
+          <li>At least one special character</li>
+        </ul>
         <div className="relative">
           <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
             Password

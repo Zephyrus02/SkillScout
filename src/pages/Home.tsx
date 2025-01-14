@@ -3,12 +3,16 @@ import { Briefcase, Search, Target } from 'lucide-react';
 import { ResumeUpload } from '../components/ResumeUpload';
 import { JobCard } from '../components/JobCard';
 import { JobPosting } from '../types';
+import { useAuthenticationStatus } from '@nhost/react';
+import { useNavigate } from 'react-router-dom';
 
 export const Home: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [jobs, setJobs] = useState<JobPosting[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [mostSuitedJob, setMostSuitedJob] = useState<JobPosting | null>(null);
+  const { isAuthenticated } = useAuthenticationStatus();
+  const navigate = useNavigate();
 
   const handleFileUpload = (file: File) => {
     setSelectedFile(file);
@@ -78,7 +82,16 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      {!selectedFile && !isLoading && (
+      {!isAuthenticated ? (
+        <section className="mb-16 text-center">
+          <button
+            onClick={() => navigate('/login')}
+            className="bg-blue-500 text-white px-6 py-3 rounded-lg cursor-pointer hover:bg-blue-600 transition-colors"
+          >
+            Try Now
+          </button>
+        </section>
+      ) : (
         <section className="mb-16">
           <ResumeUpload onFileUpload={handleFileUpload} />
         </section>

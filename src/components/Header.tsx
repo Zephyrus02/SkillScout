@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ThemeToggle } from './ThemeToggle';
 import { useUserData, useSignOut, useAuthenticationStatus } from '@nhost/react';
 
@@ -12,10 +12,12 @@ export const Header: React.FC<HeaderProps> = ({ isLoggedIn, onLogout }) => {
   const user = useUserData();
   const { signOut } = useSignOut();
   const [isProfileOpen, setIsProfileOpen] = React.useState(false);
+  const navigate = useNavigate();
 
-  const handleLogout = () => {
-    signOut();
+  const handleLogout = async () => {
+    await signOut();
     onLogout();
+    navigate('/');
   };
 
   return (
