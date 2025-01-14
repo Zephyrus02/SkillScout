@@ -7,11 +7,9 @@ export const Profile: React.FC = () => {
   const nhost = useNhostClient();
   const { changePassword, isLoading: isChangingPassword, isError: isChangePasswordError, error: changePasswordError } = useChangePassword();
 
-  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [isPasswordFormVisible, setIsPasswordFormVisible] = useState(false);
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
 
@@ -21,26 +19,24 @@ export const Profile: React.FC = () => {
       alert('New passwords do not match');
       return;
     }
-    if (!user?.email) {
-      alert('User email is not available');
-      return;
-    }
     try {
-      const signInResponse = await nhost.auth.signIn({
-        email: user.email,
-        password: currentPassword,
+      const changePasswordResponse = await nhost.auth.changePassword({
+        newPassword,
       });
 
-      if (signInResponse.error) {
-        alert('Current password is incorrect');
+      if (changePasswordResponse.error) {
+        alert(`Failed to update password: ${changePasswordResponse.error.message}`);
         return;
       }
 
-      await changePassword(newPassword);
       alert('Password updated successfully.');
       setIsPasswordFormVisible(false);
     } catch (error) {
-      console.error('Change password error:', error);
+      if (error instanceof Error) {
+        alert(`An unexpected error occurred: ${error.message}`);
+      } else {
+        alert('An unexpected error occurred.');
+      }
     }
   };
 
@@ -63,25 +59,14 @@ export const Profile: React.FC = () => {
       </div>
       {isPasswordFormVisible && (
         <form onSubmit={handleChangePassword} className="space-y-6">
-          <div className="relative">
-            <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-              Current Password
-            </label>
-            <input
-              type={showCurrentPassword ? 'text' : 'password'}
-              id="currentPassword"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-              required
-            />
-            <div
-              className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-500 dark:text-gray-400"
-              onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-            >
-              {showCurrentPassword ? <FaEyeSlash /> : <FaEye />}
-            </div>
-          </div>
+          <hr className="my-4 border-t border-gray-300 dark:border-gray-600" />
+          <ul className="list-disc list-inside text-sm text-gray-700 dark:text-gray-200">
+            <li>Minimum 10 characters</li>
+            <li>At least one uppercase letter</li>
+            <li>At least one lowercase letter</li>
+            <li>At least one number</li>
+            <li>At least one special character</li>
+          </ul>
           <div className="relative">
             <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
               New Password
