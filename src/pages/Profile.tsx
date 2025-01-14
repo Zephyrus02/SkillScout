@@ -1,27 +1,19 @@
 import React, { useState } from 'react';
 import { useUserData, useChangePassword, useNhostClient } from '@nhost/react';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 export const Profile: React.FC = () => {
   const user = useUserData();
   const nhost = useNhostClient();
   const { changePassword, isLoading: isChangingPassword, isError: isChangePasswordError, error: changePasswordError } = useChangePassword();
 
-  const [firstName, setFirstName] = useState(user?.displayName?.split(' ')[0] || '');
-  const [lastName, setLastName] = useState(user?.displayName?.split(' ')[1] || '');
+  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
-
-  const handleUpdateProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await nhost.auth.updateUser({
-        displayName: `${firstName} ${lastName}`
-      });
-      alert('Profile updated successfully.');
-    } catch (error) {
-      console.error('Update profile error:', error);
-    }
-  };
+  const [isPasswordFormVisible, setIsPasswordFormVisible] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,9 +21,24 @@ export const Profile: React.FC = () => {
       alert('New passwords do not match');
       return;
     }
+    if (!user?.email) {
+      alert('User email is not available');
+      return;
+    }
     try {
+      const signInResponse = await nhost.auth.signIn({
+        email: user.email,
+        password: currentPassword,
+      });
+
+      if (signInResponse.error) {
+        alert('Current password is incorrect');
+        return;
+      }
+
       await changePassword(newPassword);
       alert('Password updated successfully.');
+      setIsPasswordFormVisible(false);
     } catch (error) {
       console.error('Change password error:', error);
     }
@@ -40,82 +47,95 @@ export const Profile: React.FC = () => {
   return (
     <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md dark:bg-gray-800">
       <h2 className="text-3xl font-bold text-center mb-8 text-gray-800 dark:text-white">Profile</h2>
-      <form onSubmit={handleUpdateProfile} className="space-y-6">
-        <div className="flex space-x-4">
-          <div className="w-1/2">
-            <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-              First Name
+      <div className="mb-6 space-y-4">
+        <div className="flex items-center">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-200 w-32">First Name:</span>
+          <span className="text-sm text-gray-900 dark:text-gray-100">{user?.displayName?.split(' ')[0]}</span>
+        </div>
+        <div className="flex items-center">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-200 w-32">Last Name:</span>
+          <span className="text-sm text-gray-900 dark:text-gray-100">{user?.displayName?.split(' ')[1]}</span>
+        </div>
+        <div className="flex items-center">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-200 w-32">Email:</span>
+          <span className="text-sm text-gray-900 dark:text-gray-100">{user?.email}</span>
+        </div>
+      </div>
+      {isPasswordFormVisible && (
+        <form onSubmit={handleChangePassword} className="space-y-6">
+          <div className="relative">
+            <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+              Current Password
             </label>
             <input
-              type="text"
-              id="firstName"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
+              type={showCurrentPassword ? 'text' : 'password'}
+              id="currentPassword"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
               required
             />
+            <div
+              className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-500 dark:text-gray-400"
+              onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+            >
+              {showCurrentPassword ? <FaEyeSlash /> : <FaEye />}
+            </div>
           </div>
-          <div className="w-1/2">
-            <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-              Last Name
+          <div className="relative">
+            <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+              New Password
             </label>
             <input
-              type="text"
-              id="lastName"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
+              type={showNewPassword ? 'text' : 'password'}
+              id="newPassword"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
               required
             />
+            <div
+              className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-500 dark:text-gray-400"
+              onClick={() => setShowNewPassword(!showNewPassword)}
+            >
+              {showNewPassword ? <FaEyeSlash /> : <FaEye />}
+            </div>
           </div>
-        </div>
-        <div>
-          <button
-            type="submit"
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
-            Update Profile
-          </button>
-        </div>
-      </form>
-      <form onSubmit={handleChangePassword} className="space-y-6 mt-8">
-        <div>
-          <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-            New Password
-          </label>
-          <input
-            type="password"
-            id="newPassword"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="confirmNewPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-            Confirm New Password
-          </label>
-          <input
-            type="password"
-            id="confirmNewPassword"
-            value={confirmNewPassword}
-            onChange={(e) => setConfirmNewPassword(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-            required
-          />
-        </div>
-        <div>
+          <div className="relative">
+            <label htmlFor="confirmNewPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+              Confirm New Password
+            </label>
+            <input
+              type={showConfirmNewPassword ? 'text' : 'password'}
+              id="confirmNewPassword"
+              value={confirmNewPassword}
+              onChange={(e) => setConfirmNewPassword(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+              required
+            />
+            <div
+              className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-500 dark:text-gray-400"
+              onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
+            >
+              {showConfirmNewPassword ? <FaEyeSlash /> : <FaEye />}
+            </div>
+          </div>
           <button
             type="submit"
             className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             disabled={isChangingPassword}
           >
-            {isChangingPassword ? 'Updating Password...' : 'Update Password'}
+            {isChangingPassword ? 'Updating Password...' : 'Submit'}
           </button>
-        </div>
-        {isChangePasswordError && <p className="mt-4 text-sm text-red-600">{changePasswordError?.message}</p>}
-      </form>
+          {isChangePasswordError && <p className="mt-4 text-sm text-red-600">{changePasswordError?.message}</p>}
+        </form>
+      )}
+      <button
+        onClick={() => setIsPasswordFormVisible(!isPasswordFormVisible)}
+        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mt-4"
+      >
+        {isPasswordFormVisible ? 'Cancel' : 'Update Password'}
+      </button>
     </div>
   );
 };
