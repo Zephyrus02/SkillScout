@@ -3,47 +3,61 @@ import { Briefcase, Search, Target } from 'lucide-react';
 import { ResumeUpload } from '../components/ResumeUpload';
 import { JobCard } from '../components/JobCard';
 import { JobPosting } from '../types';
-import { useAuthenticationStatus } from '@nhost/react';
-import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 export const Home: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [jobs, setJobs] = useState<JobPosting[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [mostSuitedJob, setMostSuitedJob] = useState<JobPosting | null>(null);
-  const { isAuthenticated } = useAuthenticationStatus();
-  const navigate = useNavigate();
 
-  const handleFileUpload = (file: File) => {
+  const handleFileUpload = async (file: File) => {
     setSelectedFile(file);
     setIsLoading(true);
 
-    // Simulate file processing and fetching job postings
-    setTimeout(() => {
-      const mockJobs: JobPosting[] = [
-        {
-          id: 1,
-          title: 'Software Engineer',
-          company: 'Tech Corp',
-          location: 'San Francisco, CA',
-          salary: '$120,000',
-          description: 'Develop and maintain web applications.',
-          matchPercentage: 85,
+    const formData = new FormData();
+    formData.append('resume', file);
+
+    try {
+      const response = await axios.post('http://localhost:3000/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
         },
-        {
-          id: 2,
-          title: 'Frontend Developer',
-          company: 'Web Solutions',
-          location: 'New York, NY',
-          salary: '$110,000',
-          description: 'Create and optimize user interfaces.',
-          matchPercentage: 90,
-        },
-      ];
-      setJobs(mockJobs);
-      setMostSuitedJob(mockJobs.reduce((prev, current) => (prev.matchPercentage > current.matchPercentage ? prev : current)));
+      });
+
+      const jobRole = response.data.jobRole;
+      console.log('Suggested job role:', jobRole);
+
+      // Simulate fetching job postings based on the job role
+      setTimeout(() => {
+        const mockJobs: JobPosting[] = [
+          {
+            id: 1,
+            title: 'Software Engineer',
+            company: 'Tech Corp',
+            location: 'San Francisco, CA',
+            salary: '$120,000',
+            description: 'Develop and maintain web applications.',
+            matchPercentage: 85,
+          },
+          {
+            id: 2,
+            title: 'Frontend Developer',
+            company: 'Web Solutions',
+            location: 'New York, NY',
+            salary: '$110,000',
+            description: 'Create and optimize user interfaces.',
+            matchPercentage: 90,
+          },
+        ];
+        setJobs(mockJobs);
+        setMostSuitedJob(mockJobs.reduce((prev, current) => (prev.matchPercentage > current.matchPercentage ? prev : current)));
+        setIsLoading(false);
+      }, 1000); // Simulate a delay for fetching job postings
+    } catch (error) {
+      console.error('Error uploading file:', error);
       setIsLoading(false);
-    }, 1000); // Simulate a delay for file processing
+    }
   };
 
   return (
@@ -81,21 +95,9 @@ export const Home: React.FC = () => {
           </div>
         </div>
       </section>
-
-      {!isAuthenticated ? (
-        <section className="mb-16 text-center">
-          <button
-            onClick={() => navigate('/login')}
-            className="bg-blue-500 text-white px-6 py-3 rounded-lg cursor-pointer hover:bg-blue-600 transition-colors"
-          >
-            Try Now
-          </button>
-        </section>
-      ) : (
-        <section className="mb-16">
-          <ResumeUpload onFileUpload={handleFileUpload} />
-        </section>
-      )}
+      <section className="mb-16">
+        <ResumeUpload onFileUpload={handleFileUpload} />
+      </section>
 
       {isLoading && (
         <section className="flex justify-center items-center mb-16">

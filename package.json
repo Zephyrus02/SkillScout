@@ -10,11 +10,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@clerk/clerk-react": "^5.22.6",
     "@nhost/nhost-js": "^3.2.3",
     "@nhost/react": "^3.9.0",
+    "axios": "^1.7.9",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-error-boundary": "^5.0.0",
     "react-icons": "^5.4.0",
     "react-router-dom": "^6.22.3"
   },
