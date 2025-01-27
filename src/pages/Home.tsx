@@ -3,19 +3,6 @@ import { Briefcase, Search, Target } from 'lucide-react';
 import { ResumeUpload } from '../components/ResumeUpload';
 import { JobCard } from '../components/JobCard';
 import { JobPosting } from '../types';
-import { PDFDocument } from 'pdf-lib';
-
-const convertPdfToString = async (file: File): Promise<string> => {
-  const arrayBuffer = await file.arrayBuffer();
-  const pdfDoc = await PDFDocument.load(arrayBuffer);
-  const pages = pdfDoc.getPages();
-  const textPromises = pages.map(async (page) => {
-    const { items } = await page.getTextContent();
-    return items.map(item => item.str).join(' ');
-  });
-  const texts = await Promise.all(textPromises);
-  return texts.join(' ').trim();
-};
 
 export const Home: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -26,13 +13,6 @@ export const Home: React.FC = () => {
   const handleFileUpload = (file: File) => {
     setSelectedFile(file);
     setIsLoading(true);
-
-    convertPdfToString(file).then((text) => {
-      console.log(text);
-      // Process the text as needed
-    }).catch((error) => {
-      console.error('Error converting PDF to text:', error);
-    });
 
     // Simulate file processing and fetching job postings
     setTimeout(() => {
