@@ -3,7 +3,19 @@ import { Briefcase, Search, Target } from 'lucide-react';
 import { ResumeUpload } from '../components/ResumeUpload';
 import { JobCard } from '../components/JobCard';
 import { JobPosting } from '../types';
-import axios from 'axios';
+import { PDFDocument } from 'pdf-lib';
+
+const convertPdfToString = async (file: File): Promise<string> => {
+  const arrayBuffer = await file.arrayBuffer();
+  const pdfDoc = await PDFDocument.load(arrayBuffer);
+  const pages = pdfDoc.getPages();
+  const textPromises = pages.map(async (page) => {
+    const { items } = await page.getTextContent();
+    return items.map(item => item.str).join(' ');
+  });
+  const texts = await Promise.all(textPromises);
+  return texts.join(' ').trim();
+};
 
 export const Home: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -11,53 +23,43 @@ export const Home: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [mostSuitedJob, setMostSuitedJob] = useState<JobPosting | null>(null);
 
-  const handleFileUpload = async (file: File) => {
+  const handleFileUpload = (file: File) => {
     setSelectedFile(file);
     setIsLoading(true);
 
-    const formData = new FormData();
-    formData.append('resume', file);
+    convertPdfToString(file).then((text) => {
+      console.log(text);
+      // Process the text as needed
+    }).catch((error) => {
+      console.error('Error converting PDF to text:', error);
+    });
 
-    try {
-      const response = await axios.post('http://localhost:3000/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
+    // Simulate file processing and fetching job postings
+    setTimeout(() => {
+      const mockJobs: JobPosting[] = [
+        {
+          id: 1,
+          title: 'Software Engineer',
+          company: 'Tech Corp',
+          location: 'San Francisco, CA',
+          salary: '$120,000',
+          description: 'Develop and maintain web applications.',
+          matchPercentage: 85,
         },
-      });
-
-      const jobRole = response.data.jobRole;
-      console.log('Suggested job role:', jobRole);
-
-      // Simulate fetching job postings based on the job role
-      setTimeout(() => {
-        const mockJobs: JobPosting[] = [
-          {
-            id: 1,
-            title: 'Software Engineer',
-            company: 'Tech Corp',
-            location: 'San Francisco, CA',
-            salary: '$120,000',
-            description: 'Develop and maintain web applications.',
-            matchPercentage: 85,
-          },
-          {
-            id: 2,
-            title: 'Frontend Developer',
-            company: 'Web Solutions',
-            location: 'New York, NY',
-            salary: '$110,000',
-            description: 'Create and optimize user interfaces.',
-            matchPercentage: 90,
-          },
-        ];
-        setJobs(mockJobs);
-        setMostSuitedJob(mockJobs.reduce((prev, current) => (prev.matchPercentage > current.matchPercentage ? prev : current)));
-        setIsLoading(false);
-      }, 1000); // Simulate a delay for fetching job postings
-    } catch (error) {
-      console.error('Error uploading file:', error);
+        {
+          id: 2,
+          title: 'Frontend Developer',
+          company: 'Web Solutions',
+          location: 'New York, NY',
+          salary: '$110,000',
+          description: 'Create and optimize user interfaces.',
+          matchPercentage: 90,
+        },
+      ];
+      setJobs(mockJobs);
+      setMostSuitedJob(mockJobs.reduce((prev, current) => (prev.matchPercentage > current.matchPercentage ? prev : current)));
       setIsLoading(false);
-    }
+    }, 2000);
   };
 
   return (
