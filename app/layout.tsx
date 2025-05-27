@@ -10,7 +10,10 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "SkillScout - AI-Powered Job Matching",
   description: "Find your perfect job match with AI-powered resume analysis and job recommendations from top portals.",
-  generator: 'v0.dev'
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+  }
 }
 
 export default function RootLayout({

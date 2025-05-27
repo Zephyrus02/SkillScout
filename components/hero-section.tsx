@@ -2,8 +2,11 @@
 
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Sparkles, Target, Zap } from "lucide-react"
+import { SignUpButton, useAuth } from "@clerk/nextjs"
 
 export default function HeroSection() {
+  const { isSignedIn } = useAuth();
+  
   const scrollToUpload = () => {
     document.getElementById("upload-section")?.scrollIntoView({ behavior: "smooth" })
   }
@@ -41,14 +44,26 @@ export default function HeroSection() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
-            <Button
-              size="lg"
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-lg px-8 py-6 h-auto"
-              onClick={scrollToUpload}
-            >
-              Upload Resume Now
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
+            {isSignedIn ? (
+              <Button
+                size="lg"
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-lg px-8 py-6 h-auto"
+                onClick={scrollToUpload}
+              >
+                Upload Resume Now
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            ) : (
+              <SignUpButton mode="modal">
+                <Button
+                  size="lg"
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-lg px-8 py-6 h-auto"
+                >
+                  Upload Resume Now
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </SignUpButton>
+            )}
             <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto">
               Watch Demo
             </Button>

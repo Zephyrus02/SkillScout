@@ -68,13 +68,25 @@ export default function JobResults({ jobs }: JobResultsProps) {
               <CardHeader className="pb-4">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-3">
-                    <Image
-                      src={job.image || job.logo || "/placeholder.svg"}
-                      alt={`${job.company} logo`}
-                      width={48}
-                      height={48}
-                      className="rounded-lg"
-                    />
+                    {job.image || job.logo ? (
+                      <Image
+                        src={job.image || job.logo || "/favicon.ico"}
+                        alt={`${job.company} logo`}
+                        width={48}
+                        height={48}
+                        className="rounded-lg"
+                      />
+                    ) : (
+                      <div className="h-12 w-12 rounded-lg overflow-hidden">
+                        <Image
+                          src="/favicon.ico"
+                          alt="SkillScout Logo"
+                          width={48}
+                          height={48}
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                    )}
                     <div>
                       <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors">
                         {job.title}
@@ -129,13 +141,25 @@ export default function JobResults({ jobs }: JobResultsProps) {
             <>
               <DialogHeader>
                 <div className="flex items-center space-x-3 mb-2">
-                  <Image
-                    src={selectedJob.image || selectedJob.logo || "/placeholder.svg"}
-                    alt={`${selectedJob.company} logo`}
-                    width={60}
-                    height={60}
-                    className="rounded-lg"
-                  />
+                  {selectedJob.image || selectedJob.logo ? (
+                    <Image
+                      src={selectedJob.image || selectedJob.logo || "/favicon.ico"}
+                      alt={`${selectedJob.company} logo`}
+                      width={60}
+                      height={60}
+                      className="rounded-lg"
+                    />
+                  ) : (
+                    <div className="h-15 w-15 rounded-lg overflow-hidden">
+                      <Image
+                        src="/favicon.ico"
+                        alt="SkillScout Logo"
+                        width={60}
+                        height={60}
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                  )}
                   <div>
                     <DialogTitle className="text-2xl">{selectedJob.title}</DialogTitle>
                     <DialogDescription className="text-lg font-medium">{selectedJob.company}</DialogDescription>
