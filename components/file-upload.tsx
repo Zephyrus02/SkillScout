@@ -5,10 +5,12 @@ import { useDropzone } from "react-dropzone"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { Upload, FileText, CheckCircle, Loader2 } from "lucide-react"
+import { Upload, FileText, CheckCircle, Loader2, AlertCircle } from "lucide-react"
+import { useUploadThing } from "@/utils/uploadthing"
+import { useUser } from "@clerk/nextjs"
 
 interface FileUploadProps {
-  onFileUpload: (file: File) => void
+  onFileUpload: (file: File, fileUrl?: string) => void
   isProcessing: boolean
   uploadedFile: File | null
 }
@@ -16,16 +18,58 @@ interface FileUploadProps {
 export default function FileUpload({ onFileUpload, isProcessing, uploadedFile }: FileUploadProps) {
   const [progress, setProgress] = useState(0)
   const [currentStep, setCurrentStep] = useState("")
-
-  const onDrop = useCallback(
-    (acceptedFiles: File[]) => {
-      const file = acceptedFiles[0]
-      if (file && file.type === "application/pdf") {
-        onFileUpload(file)
-        simulateProgress()
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  
+  // Get user data from Clerk
+  const { user } = useUser();
+  
+  // Initialize the UploadThing client
+  const { startUpload, isUploading } = useUploadThing("resumeUploader", {
+    onClientUploadComplete: (res) => {
+      if (res && res[0]) {
+        // Resume has been uploaded to UploadThing
+        console.log("Upload completed successfully:", res[0]);
+        
+        // If we have a file in memory, pass it along with the URL to parent
+        if (uploadedFile) {
+          onFileUpload(uploadedFile, res[0].url);
+          simulateProgress();
+        }
       }
     },
-    [onFileUpload],
+    onUploadError: (error) => {
+      console.error("UploadThing error:", error);
+      setUploadError(`Error uploading file: ${error.message}`);
+    },
+  });
+
+  const onDrop = useCallback(
+    async (acceptedFiles: File[]) => {
+      const file = acceptedFiles[0]
+      if (file && file.type === "application/pdf") {
+        // Create a custom file with the user's name
+        const userName = user?.fullName || user?.firstName || user?.username || 'user';
+        const fileExtension = file.name.split('.').pop();
+        
+        // Create a new File object with the custom name
+        const customFile = new File([file], `${userName}_Resume.${fileExtension}`, { 
+          type: file.type 
+        });
+        
+        // Pass the file to the parent for UI display purposes first
+        onFileUpload(customFile);
+        
+        // Start the upload to UploadThing
+        try {
+          await startUpload([customFile]);
+          // Progress simulation is started in onClientUploadComplete after successful upload
+        } catch (error) {
+          console.error("Upload error:", error);
+          setUploadError("Upload failed. Please try again.");
+        }
+      }
+    },
+    [onFileUpload, startUpload, user],
   )
 
   const simulateProgress = () => {
@@ -55,6 +99,7 @@ export default function FileUpload({ onFileUpload, isProcessing, uploadedFile }:
       "application/pdf": [".pdf"],
     },
     multiple: false,
+    disabled: isUploading || isProcessing,
   })
 
   if (isProcessing) {
@@ -98,7 +143,20 @@ export default function FileUpload({ onFileUpload, isProcessing, uploadedFile }:
         <div className="max-w-2xl mx-auto">
           <Card className="border-0 shadow-xl">
             <CardContent className="p-8">
-              {uploadedFile ? (
+              {uploadError ? (
+                <div className="text-center">
+                  <AlertCircle className="h-16 w-16 text-red-600 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                    Upload Error
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-300 mb-6">
+                    {uploadError}
+                  </p>
+                  <Button onClick={() => window.location.reload()} variant="outline">
+                    Try Again
+                  </Button>
+                </div>
+              ) : uploadedFile ? (
                 <div className="text-center">
                   <CheckCircle className="h-16 w-16 text-green-600 mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
@@ -118,10 +176,14 @@ export default function FileUpload({ onFileUpload, isProcessing, uploadedFile }:
                     isDragActive
                       ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
                       : "border-gray-300 dark:border-gray-600 hover:border-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800"
-                  }`}
+                  } ${isUploading ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
                   <input {...getInputProps()} />
-                  <Upload className="h-16 w-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+                  {isUploading ? (
+                    <Loader2 className="h-16 w-16 text-blue-600 mx-auto mb-4 animate-spin" />
+                  ) : (
+                    <Upload className="h-16 w-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+                  )}
 
                   {isDragActive ? (
                     <div>
@@ -136,9 +198,12 @@ export default function FileUpload({ onFileUpload, isProcessing, uploadedFile }:
                       <p className="text-gray-600 dark:text-gray-300 mb-6">
                         or click to browse and select your PDF file
                       </p>
-                      <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+                      <Button 
+                        className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                        disabled={isUploading}
+                      >
                         <FileText className="h-4 w-4 mr-2" />
-                        Choose File
+                        {isUploading ? "Uploading..." : "Choose File"}
                       </Button>
                     </div>
                   )}

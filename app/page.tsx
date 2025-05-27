@@ -26,11 +26,20 @@ function mapJobData(jobs: any[]) {
 
 export default function HomePage() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
+  const [fileUrl, setFileUrl] = useState<string | undefined>(undefined)
   const [isProcessing, setIsProcessing] = useState(false)
   const [showResults, setShowResults] = useState(false)
 
-  const handleFileUpload = async (file: File) => {
+  const handleFileUpload = async (file: File, fileUrl?: string) => {
     setUploadedFile(file)
+    
+    // Store the UploadThing URL
+    if (fileUrl) {
+      setFileUrl(fileUrl)
+      console.log("File uploaded to UploadThing:", fileUrl)
+      // Here you could save the file URL to a database or state management
+    }
+    
     setIsProcessing(true)
     setShowResults(false)
 
