@@ -58,7 +58,6 @@ export default function HowItWorks() {
                   <step.icon className="h-8 w-8" />
                 </div>
                 <div className="absolute -top-2 -left-2 w-8 h-8 bg-gray-900 text-white rounded-full flex items-center justify-center text-sm font-bold">
-                  {index + 1}
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">{step.title}</h3>
                 <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{step.description}</p>
